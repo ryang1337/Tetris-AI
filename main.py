@@ -19,7 +19,7 @@ I = [[1, 0], [1, 1], [1, 2], [1, 3]]
 
 J = [[0, 0], [1, 0], [1, 1], [1, 2]]
 
-L = [[0, 1], [1, 1], [1, 2], [0, 2]]
+L = [[1, 0], [1, 1], [1, 2], [0, 2]]
 
 O = [[0, 1], [0, 2], [1, 1], [1, 2]]
 
@@ -49,7 +49,7 @@ WALL_KICK_LEFT = [[(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
 
 SHAPES = [I, J, L, O, S, T, Z]
 SHAPE_Q = [I, J, L, O, S, T, Z]
-SHAPE_COLORS = [(206, 221, 226), (126, 164, 179), (255, 179, 71),
+SHAPE_COLORS = [(206, 221, 226), (255, 179, 71), (126, 164, 179),
                 (253, 253, 150), (119, 221, 119), (177, 156, 217),
                 (255, 105, 97)]
 
@@ -91,10 +91,10 @@ def create_grid(locked_pos={}):
 
 # returns the list of positions of each mino in the tetromino relative to itself
 # after calculating the rotation
-def get_piece_format(piece, rotation):
+def get_piece_format(piece):
     f = piece.shape
     if f != O:
-        for i in range(rotation):
+        for i in range(piece.rotation):
             for pair in f:
                 temp = pair[0]
                 pair[0] = pair[1]
@@ -111,7 +111,7 @@ def get_piece_format(piece, rotation):
 # returns the position of each mino in the tetromino relative to the top left
 # corner of the screen
 def convert_shape_format(piece):
-    piece_format = get_piece_format(piece, piece.rotation)
+    piece_format = get_piece_format(piece)
     positions = []
     for pair in piece_format:
         positions.append((piece.x + pair[0], piece.y + pair[1]))
@@ -253,11 +253,10 @@ def main(surface):
             if not (valid_move(current_piece, grid)) and current_piece.y > 0:
                 current_piece.y -= 1
                 change_piece = True
-                fall_speed = 0.27
+                fall_speed = 0.5
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
@@ -286,7 +285,7 @@ def main(surface):
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
                 if event.key == pygame.K_SPACE:
-                    fall_speed = 0.0001
+                    fall_speed = 0.001
             if event == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     fall_speed = 0.5
@@ -312,8 +311,8 @@ def main(surface):
     pygame.display.quit()
 
 
-def main_menu(win):
-    main(win)
+def main_menu(window):
+    main(window)
 
 
 win = pygame.display.set_mode((s_width, s_height))
@@ -325,5 +324,6 @@ main_menu(win)  # start game
 # TODO:
 # fix rotation bug
 # fix end game bug
-# fix square color bug
+# fix square color bug \/
 # fix soft drop not stopping after releasing key down bug
+# fix initial rotation position bug
