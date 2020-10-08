@@ -1,21 +1,6 @@
 import pygame
 import random
 
-# creating the data structure for pieces
-# setting up global vars
-# functions
-# - create_grid
-# - draw_grid
-# - draw_window
-# - rotating shape in main
-# - setting up the main
-
-"""
-10 x 20 square grid
-shapes: S, Z, I, O, J, L, T
-represented in order by 0 - 6
-"""
-
 pygame.font.init()
 
 # GLOBALS VARS
@@ -44,22 +29,31 @@ T = [[0, 1], [1, 0], [1, 1], [1, 2]]
 
 Z = [[0, 0], [0, 1], [1, 1], [1, 2]]
 
-
-#wallkick data
-I_WALL_KICK_RIGHT = [[(0,0),(1,0),(-2,0),(1,-2),(-2,1)], [(0,0),(-2,0),(1,0),(-2,-1),(1,2)],
-                     [(0,0),(-1,0),(2,0),(-1,2),(2,-1)], [(0,0),(2,0),(-1,0),(2,1),(-1,-2)]]
-I_WALL_KICK_LEFT = [[(0,0),(2,0),(-1,0),(2,1),(-1,-2)], [(0,0),(1,0),(-2,0),(1,-2),(-2,1)],
-                    [(0,0),(-2,0),(1,0),(-2,-1),(1,2)], [(0,0),(-1,0),(2,0),(-1,2),(2,-1)]]
-WALL_KICK_RIGHT = [[(0,0),(-1,0),(-1,-1),(0,2),(-1,2)], [(0,0),(-1,0),(-1,1),(0,-2),(-1,-2)],
-                   [(0,0),(1,0),(1,-1),(0,2),(1,2)], [(0,0),(1,0),(1,1),(0,-2),(1,-2)]]
-WALL_KICK_LEFT = [[(0,0),(1,0),(1,-1),(0,2),(1,2)], [(0,0),(-1,0),(-1,1),(0,-2),(-1,-2)],
-                  [(0,0),(-1,0),(-1,-1),(0,2),(-1,2)], [(0,0),(1,0),(1,1),(0,-2),(1,-2)]]
+# wall kick data
+I_WALL_KICK_RIGHT = [[(0, 0), (1, 0), (-2, 0), (1, -2), (-2, 1)],
+                     [(0, 0), (-2, 0), (1, 0), (-2, -1), (1, 2)],
+                     [(0, 0), (-1, 0), (2, 0), (-1, 2), (2, -1)],
+                     [(0, 0), (2, 0), (-1, 0), (2, 1), (-1, -2)]]
+I_WALL_KICK_LEFT = [[(0, 0), (2, 0), (-1, 0), (2, 1), (-1, -2)],
+                    [(0, 0), (1, 0), (-2, 0), (1, -2), (-2, 1)],
+                    [(0, 0), (-2, 0), (1, 0), (-2, -1), (1, 2)],
+                    [(0, 0), (-1, 0), (2, 0), (-1, 2), (2, -1)]]
+WALL_KICK_RIGHT = [[(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
+                   [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
+                   [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
+                   [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)]]
+WALL_KICK_LEFT = [[(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
+                  [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
+                  [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
+                  [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)]]
 
 SHAPES = [I, J, L, O, S, T, Z]
 SHAPE_Q = [I, J, L, O, S, T, Z]
 SHAPE_COLORS = [(206, 221, 226), (126, 164, 179), (255, 179, 71),
                 (253, 253, 150), (119, 221, 119), (177, 156, 217),
                 (255, 105, 97)]
+
+
 # index 0 - 6 represent shape
 
 
@@ -69,7 +63,7 @@ class Piece(object):
         self.y = y
         self.shape = shape
         self.color = SHAPE_COLORS[SHAPES.index(shape)]
-        self.rotation = 0;
+        self.rotation = 0
 
     def rotate_left(self):
         if self.rotation == 0:
@@ -89,10 +83,11 @@ def create_grid(locked_pos={}):
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            if(j, i) in locked_pos:
+            if (j, i) in locked_pos:
                 color = locked_pos[(j, i)]
                 grid[i][j] = color
     return grid
+
 
 # returns the list of positions of each mino in the tetromino relative to itself
 # after calculating the rotation
@@ -112,24 +107,30 @@ def get_piece_format(piece, rotation):
                     pair[1] = 2 - pair[1]
     return f
 
+
 # returns the position of each mino in the tetromino relative to the top left
 # corner of the screen
-def convert_shape_format(piece, rotation):
-    piece_format = get_piece_format(piece, rotation)
+def convert_shape_format(piece):
+    piece_format = get_piece_format(piece, piece.rotation)
     positions = []
     for pair in piece_format:
         positions.append((piece.x + pair[0], piece.y + pair[1]))
 
     return positions
 
+
 # returns whether or not the piece is in a valid position
 def valid_move(piece, grid):
-    formatted = convert_shape_format(piece, piece.rotation)
+    formatted = convert_shape_format(piece)
     for pos in formatted:
-        if not(0 <= pos[0] < play_width / block_size and -2 <= pos[1] <
-               play_height / block_size and grid[pos[0], pos[1]] == (0, 0, 0)):
+        if not (0 <= pos[0] < play_width / block_size and -2 <= pos[1] <
+                play_height / block_size):
             return False
+        if pos[1] >= 0:
+            if not(grid[pos[1]][pos[0]] == (0, 0, 0)):
+                return False
     return True
+
 
 # returns the change in position for a rotation to be valid and returns a tuple
 # with the x and y delta. if there are no possible positions, returns a tuple
@@ -166,6 +167,7 @@ def get_possible_rotates(piece, grid, direction):
                     kick_delta = pos
     return kick_delta
 
+
 def check_lost(positions):
     for pos in positions:
         x, y = pos
@@ -180,8 +182,7 @@ def get_shape():
             SHAPE_Q.append(s)
     shape = random.choice(SHAPE_Q)
     SHAPE_Q.remove(shape)
-    return Piece(3, -2, shape)
-
+    return Piece(3, -3, shape)
 
 
 def draw_text_middle(text, size, color, surface):
@@ -194,7 +195,7 @@ def draw_grid(surface, grid):
 
     for i in range(len(grid)):
         pygame.draw.line(surface, (81, 81, 77), (sx, sy + i * block_size),
-                         sx + play_width, sy + i * block_size)
+                         (sx + play_width, sy + i * block_size))
     for j in range(len(grid[0])):
         pygame.draw.line(surface, (81, 81, 77), (sx + j * block_size, sy),
                          (sx + j * block_size, sy + play_height))
@@ -203,8 +204,10 @@ def draw_grid(surface, grid):
 def clear_rows(grid, locked):
     pass
 
+
 def draw_next_shape(shape, surface):
     pass
+
 
 def draw_window(surface, grid):
     surface.fill((0, 0, 0))
@@ -214,7 +217,7 @@ def draw_window(surface, grid):
     label = font.render('Tetris', 1, (255, 255, 255))
 
     surface.blit(label, (top_left_x + play_width / 2 - label.get_width() /
-                         2), play_height * 50 / 600)
+                         2, play_height / 25))
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -230,7 +233,6 @@ def draw_window(surface, grid):
 
 def main(surface):
     locked_positions = {}
-    grid = create_grid(locked_positions)
 
     change_piece = False
     run = True
@@ -248,7 +250,7 @@ def main(surface):
         if fall_time / 1000 > fall_speed:
             fall_time = 0
             current_piece.y += 1
-            if not(valid_move(current_piece, grid)) and current_piece.y > 0:
+            if not (valid_move(current_piece, grid)) and current_piece.y > 0:
                 current_piece.y -= 1
                 change_piece = True
                 fall_speed = 0.27
@@ -259,15 +261,15 @@ def main(surface):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
-                    if not(valid_move(current_piece, grid)):
+                    if not (valid_move(current_piece, grid)):
                         current_piece.x += 1
                 if event.key == pygame.K_RIGHT:
                     current_piece.x += 1
-                    if not(valid_move(current_piece, grid)):
+                    if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
                 if event.key == pygame.K_DOWN:
                     fall_speed = 0.13
-                if event.key == pygame.K_Z:
+                if event.key == pygame.K_z:
                     current_piece.rotate_left()
                     delta = get_possible_rotates(current_piece, grid, 'left')
                     if delta == (None, None):
@@ -275,7 +277,7 @@ def main(surface):
                     else:
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
-                if event.key == pygame.K_X:
+                if event.key == pygame.K_x:
                     current_piece.rotate_right()
                     delta = get_possible_rotates(current_piece, grid, 'right')
                     if delta == (None, None):
@@ -284,7 +286,7 @@ def main(surface):
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
                 if event.key == pygame.K_SPACE:
-                    fall_speed = 0.01
+                    fall_speed = 0.0001
             if event == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     fall_speed = 0.5
@@ -294,7 +296,21 @@ def main(surface):
             x, y = shape_pos[i]
             if y > -1:
                 grid[y][x] = current_piece.color
+
+        if change_piece:
+            for pos in shape_pos:
+                p = (pos[0], pos[1])
+                locked_positions[p] = current_piece.color
+            current_piece = next_piece
+            next_piece = get_shape()
+            change_piece = False
+
         draw_window(surface, grid)
+
+        if check_lost(locked_positions):
+            run = False
+    pygame.display.quit()
+
 
 def main_menu(win):
     main(win)
@@ -305,3 +321,9 @@ pygame.display.set_caption('Tetris')
 icon = pygame.image.load('tetris.png')
 pygame.display.set_icon(icon)
 main_menu(win)  # start game
+
+# TODO:
+# fix rotation bug
+# fix end game bug
+# fix square color bug
+# fix soft drop not stopping after releasing key down bug
