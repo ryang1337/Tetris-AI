@@ -96,7 +96,6 @@ def get_piece_format(piece):
     f = copy.deepcopy(piece.shape)
     if f != O:
         for i in range(piece.rotation):
-            print(T)
             for pair in f:
                 temp = pair[0]
                 pair[0] = pair[1]
@@ -256,7 +255,7 @@ def main(surface):
         if fall_time / 1000 > fall_speed:
             fall_time = 0
             current_piece.y += 1
-            if not (valid_move(current_piece, grid)) and current_piece.y > 0:
+            if not (valid_move(current_piece, grid)) and current_piece.y > -1:
                 current_piece.y -= 1
                 change_piece = True
                 fall_speed = 0.5
@@ -295,7 +294,6 @@ def main(surface):
             if event == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     fall_speed = 0.5
-        print(T)
         shape_pos = convert_shape_format(current_piece)
 
         for i in range(len(shape_pos)):
@@ -329,6 +327,10 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# fix rotation bug \/
-# fix end game bug
+# fix end game bug \/
 # fix soft drop not stopping after releasing key down bug
+# implement line clear
+# implement hold
+# implement next pieces
+# implement non insta lock for soft drop
+# implement piece drop preview
