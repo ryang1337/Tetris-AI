@@ -80,7 +80,7 @@ class Piece(object):
 
 
 def create_grid(locked_pos={}):
-    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
+    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(22)]
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -124,8 +124,8 @@ def convert_shape_format(piece):
 def valid_move(piece, grid):
     formatted = convert_shape_format(piece)
     for pos in formatted:
-        if not (0 <= pos[0] < play_width / block_size and -2 <= pos[1] <
-                play_height / block_size):
+        if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] <
+                play_height / block_size + 2):
             return False
         if pos[1] >= 0:
             if not(grid[pos[1]][pos[0]] == (0, 0, 0)):
@@ -176,9 +176,9 @@ def get_possible_rotates(piece, grid, direction):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y < 1:
-            return True
-    return False
+        if y >= 2:
+            return False
+    return True
 
 
 def get_shape():
@@ -187,7 +187,7 @@ def get_shape():
             SHAPE_Q.append(s)
     shape = random.choice(SHAPE_Q)
     SHAPE_Q.remove(shape)
-    return Piece(3, -3, shape)
+    return Piece(3, 0, shape)
 
 
 def draw_text_middle(text, size, color, surface):
@@ -242,8 +242,9 @@ def draw_window(surface, grid):
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             pygame.draw.rect(surface, grid[i][j], (top_left_x + j * block_size,
-                                                   top_left_y + i * block_size,
-                                                   block_size, block_size), 0)
+                                                   top_left_y + (i - 2) *
+                                                   block_size, block_size,
+                                                   block_size), 0)
 
     draw_grid(surface, grid)
     pygame.draw.rect(surface, (255, 255, 255), (top_left_x, top_left_y,
@@ -286,6 +287,8 @@ def main(surface):
             current_piece.y += 1
             if not (valid_move(current_piece, grid)) and current_piece.y > -1:
                 current_piece.y -= 1
+                if check_lost(convert_shape_format(current_piece)):
+                    run = False
                 change_piece = True
                 fall_speed = 0.6
 
@@ -328,8 +331,7 @@ def main(surface):
 
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
-            if y > -1:
-                grid[y][x] = current_piece.color
+            grid[y][x] = current_piece.color
 
         if change_piece:
             for pos in shape_pos:
@@ -342,9 +344,6 @@ def main(surface):
         draw_window(surface, grid)
         draw_next_shape(next_piece, surface)
         pygame.display.update()
-
-        if check_lost(locked_positions):
-            run = False
     pygame.display.quit()
 
 
@@ -361,6 +360,5 @@ main_menu(win)  # start game
 # TODO:
 # implement line clear
 # implement hold
-# implement next pieces \/
 # implement non insta lock for soft drop
 # implement piece drop preview
