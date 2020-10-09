@@ -236,6 +236,21 @@ def draw_window(surface, grid):
     pygame.display.update()
 
 
+def key_pressed(input_key):
+    keys_pressed = pygame.key.get_pressed()
+    if keys_pressed[input_key]:
+        return True
+    else:
+        return False
+
+
+def hard_drop(piece, grid):
+    piece.y += 1
+    while valid_move(piece, grid):
+        piece.y += 1
+    piece.y -= 1
+
+
 def main(surface):
     locked_positions = {}
 
@@ -245,7 +260,7 @@ def main(surface):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 0.5
+    fall_speed = 0.4
 
     while run:
         grid = create_grid(locked_positions)
@@ -258,7 +273,13 @@ def main(surface):
             if not (valid_move(current_piece, grid)) and current_piece.y > -1:
                 current_piece.y -= 1
                 change_piece = True
-                fall_speed = 0.5
+                fall_speed = 0.4
+
+        if key_pressed(pygame.K_DOWN):
+            fall_speed = 0.03
+        else:
+            fall_speed = 0.4
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -271,8 +292,6 @@ def main(surface):
                     current_piece.x += 1
                     if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
-                if event.key == pygame.K_DOWN:
-                    fall_speed = 0.13
                 if event.key == pygame.K_z:
                     current_piece.rotate_left()
                     delta = get_possible_rotates(current_piece, grid, 'left')
@@ -290,10 +309,7 @@ def main(surface):
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
                 if event.key == pygame.K_SPACE:
-                    fall_speed = 0.001
-            if event == pygame.KEYUP:
-                if event.key == pygame.K_DOWN:
-                    fall_speed = 0.5
+                    hard_drop(current_piece, grid)
         shape_pos = convert_shape_format(current_piece)
 
         for i in range(len(shape_pos)):
@@ -327,8 +343,7 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# fix end game bug \/
-# fix soft drop not stopping after releasing key down bug
+# fix soft drop not stopping after releasing key down bug \/
 # implement line clear
 # implement hold
 # implement next pieces
