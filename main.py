@@ -114,7 +114,7 @@ def convert_shape_format(piece):
     piece_format = get_piece_format(piece)
     positions = []
     for pair in piece_format:
-        positions.append((piece.x + pair[0], piece.y + pair[1]))
+        positions.append((piece.x + pair[1], piece.y + pair[0]))
 
     return positions
 
@@ -324,6 +324,5 @@ main_menu(win)  # start game
 # TODO:
 # fix rotation bug
 # fix end game bug
-# fix square color bug \/
 # fix soft drop not stopping after releasing key down bug
-# fix initial rotation position bug
+# fix initial rotation position bug \/
