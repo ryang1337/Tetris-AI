@@ -198,10 +198,10 @@ def draw_grid(surface, grid):
     sx = top_left_x
     sy = top_left_y
 
-    for i in range(len(grid)):
+    for i in range(1, len(grid)):
         pygame.draw.line(surface, (81, 81, 77), (sx, sy + i * block_size),
                          (sx + play_width, sy + i * block_size))
-    for j in range(len(grid[0])):
+    for j in range(1, len(grid[0])):
         pygame.draw.line(surface, (81, 81, 77), (sx + j * block_size, sy),
                          (sx + j * block_size, sy + play_height))
 
@@ -210,8 +210,23 @@ def clear_rows(grid, locked):
     pass
 
 
-def draw_next_shape(shape, surface):
-    pass
+def draw_next_shape(piece, surface):
+    font = pygame.font.SysFont('malgungothicsemilight', 30)
+    label = font.render('Next', 1, (255, 255, 255))
+    label_w, label_h = font.size('Next')
+    sx = (2 * s_width - top_left_x) / 2 - label_w / 2
+    sy = top_left_y
+    if piece.shape == I or piece.shape == O:
+        px = (2 * s_width - top_left_x) / 2 - 2 * block_size
+    else:
+        px = (2 * s_width - top_left_x) / 2 - 1.5 * block_size
+    py = sy + block_size + label_h
+    formatted = get_piece_format(piece)
+    for pair in formatted:
+        pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
+                                                py + pair[0] * block_size,
+                                                block_size, block_size), 0)
+    surface.blit(label, (sx, sy))
 
 
 def draw_window(surface, grid):
@@ -230,10 +245,9 @@ def draw_window(surface, grid):
                                                    top_left_y + i * block_size,
                                                    block_size, block_size), 0)
 
+    draw_grid(surface, grid)
     pygame.draw.rect(surface, (255, 255, 255), (top_left_x, top_left_y,
                                                 play_width, play_height), 4)
-    draw_grid(surface, grid)
-    pygame.display.update()
 
 
 def key_pressed(input_key):
@@ -260,7 +274,7 @@ def main(surface):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 0.4
+    fall_speed = 0.6
 
     while run:
         grid = create_grid(locked_positions)
@@ -273,12 +287,12 @@ def main(surface):
             if not (valid_move(current_piece, grid)) and current_piece.y > -1:
                 current_piece.y -= 1
                 change_piece = True
-                fall_speed = 0.4
+                fall_speed = 0.6
 
         if key_pressed(pygame.K_DOWN):
             fall_speed = 0.03
         else:
-            fall_speed = 0.4
+            fall_speed = 0.6
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -326,6 +340,8 @@ def main(surface):
             change_piece = False
 
         draw_window(surface, grid)
+        draw_next_shape(next_piece, surface)
+        pygame.display.update()
 
         if check_lost(locked_positions):
             run = False
@@ -343,9 +359,8 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# fix soft drop not stopping after releasing key down bug \/
 # implement line clear
 # implement hold
-# implement next pieces
+# implement next pieces \/
 # implement non insta lock for soft drop
 # implement piece drop preview
