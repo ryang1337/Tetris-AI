@@ -1,5 +1,6 @@
 import pygame
 import random
+import copy
 
 pygame.font.init()
 
@@ -92,9 +93,10 @@ def create_grid(locked_pos={}):
 # returns the list of positions of each mino in the tetromino relative to itself
 # after calculating the rotation
 def get_piece_format(piece):
-    f = piece.shape
+    f = copy.deepcopy(piece.shape)
     if f != O:
         for i in range(piece.rotation):
+            print(T)
             for pair in f:
                 temp = pair[0]
                 pair[0] = pair[1]
@@ -146,12 +148,14 @@ def get_possible_rotates(piece, grid, direction):
                 temp.y = piece.y + pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
+                    break
         else:
             for pos in I_WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y + pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
+                    break
     else:
         if direction == 'left':
             for pos in WALL_KICK_LEFT[temp.rotation]:
@@ -159,12 +163,14 @@ def get_possible_rotates(piece, grid, direction):
                 temp.y = piece.y + pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
+                    break
         else:
             for pos in WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y + pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
+                    break
     return kick_delta
 
 
@@ -289,6 +295,7 @@ def main(surface):
             if event == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     fall_speed = 0.5
+        print(T)
         shape_pos = convert_shape_format(current_piece)
 
         for i in range(len(shape_pos)):
@@ -322,7 +329,6 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# fix rotation bug
+# fix rotation bug \/
 # fix end game bug
 # fix soft drop not stopping after releasing key down bug
-# fix initial rotation position bug \/
