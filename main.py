@@ -50,7 +50,7 @@ WALL_KICK_LEFT = [[(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
 
 SHAPES = [I, J, L, O, S, T, Z]
 SHAPE_Q = [I, J, L, O, S, T, Z]
-SHAPE_COLORS = [(206, 221, 226), (255, 179, 71), (126, 164, 179),
+SHAPE_COLORS = [(206, 221, 226), (126, 164, 179), (255, 179, 71),
                 (253, 253, 150), (119, 221, 119), (177, 156, 217),
                 (255, 105, 97)]
 
@@ -80,7 +80,7 @@ class Piece(object):
 
 
 def create_grid(locked_pos={}):
-    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(22)]
+    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
@@ -125,7 +125,7 @@ def valid_move(piece, grid):
     formatted = convert_shape_format(piece)
     for pos in formatted:
         if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] <
-                play_height / block_size + 2):
+                play_height / block_size + 3):
             return False
         if pos[1] >= 0:
             if not(grid[pos[1]][pos[0]] == (0, 0, 0)):
@@ -176,7 +176,7 @@ def get_possible_rotates(piece, grid, direction):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y >= 2:
+        if y >= 3:
             return False
     return True
 
@@ -242,7 +242,7 @@ def draw_window(surface, grid):
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             pygame.draw.rect(surface, grid[i][j], (top_left_x + j * block_size,
-                                                   top_left_y + (i - 2) *
+                                                   top_left_y + (i - 3) *
                                                    block_size, block_size,
                                                    block_size), 0)
 
@@ -297,6 +297,15 @@ def main(surface):
         else:
             fall_speed = 0.6
 
+        if change_piece:
+            for pos in shape_pos:
+                p = (pos[0], pos[1])
+                locked_positions[p] = current_piece.color
+            current_piece = next_piece
+            next_piece = get_shape()
+            change_piece = False
+            fall_time = 10000
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -327,19 +336,12 @@ def main(surface):
                         current_piece.y += delta[1]
                 if event.key == pygame.K_SPACE:
                     hard_drop(current_piece, grid)
+                    change_piece = True
         shape_pos = convert_shape_format(current_piece)
 
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
             grid[y][x] = current_piece.color
-
-        if change_piece:
-            for pos in shape_pos:
-                p = (pos[0], pos[1])
-                locked_positions[p] = current_piece.color
-            current_piece = next_piece
-            next_piece = get_shape()
-            change_piece = False
 
         draw_window(surface, grid)
         draw_next_shape(next_piece, surface)
