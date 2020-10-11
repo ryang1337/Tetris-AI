@@ -207,7 +207,21 @@ def draw_grid(surface, grid):
 
 
 def clear_rows(grid, locked):
-    pass
+    cleared_below = 0
+    for i in range(len(grid) - 1, 2, -1):
+        row = grid[i]
+        print(row)
+        if (0, 0, 0) not in row:
+            print('here')
+            cleared_below += 1
+            for j in range(len(row)):
+                del locked[(j, i)]
+        else:
+            for j in range(len(row)):
+                if not(grid[i][j] == (0, 0, 0)):
+                    locked[(j, i + cleared_below)] = locked[(j, i)]
+                    if cleared_below > 0:
+                        del locked[(j, i)]
 
 
 def draw_next_shape(piece, surface):
@@ -301,9 +315,11 @@ def main(surface):
             for pos in shape_pos:
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
+            grid = create_grid(locked_positions)
             current_piece = next_piece
             next_piece = get_shape()
             change_piece = False
+            clear_rows(grid, locked_positions)
             fall_time = 10000
 
         for event in pygame.event.get():
@@ -360,7 +376,8 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# implement line clear
+# implement line clear \/
 # implement hold
 # implement non insta lock for soft drop
 # implement piece drop preview
+# implement DAS
