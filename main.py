@@ -1,4 +1,5 @@
 import pygame
+from pygame import gfxdraw
 import random
 import copy
 
@@ -130,7 +131,7 @@ def valid_move(piece, grid):
                 play_height / block_size + 3):
             return False
         if pos[1] >= 0:
-            if not(grid[pos[1]][pos[0]] == (0, 0, 0)):
+            if not (grid[pos[1]][pos[0]] == (0, 0, 0)):
                 return False
     return True
 
@@ -219,7 +220,7 @@ def clear_rows(grid, locked):
                 del locked[(j, i)]
         else:
             for j in range(len(row)):
-                if not(grid[i][j] == (0, 0, 0)):
+                if not (grid[i][j] == (0, 0, 0)):
                     locked[(j, i + cleared_below)] = locked[(j, i)]
                     if cleared_below > 0:
                         del locked[(j, i)]
@@ -248,7 +249,6 @@ def draw_next_shape(piece, surface):
 # draws
 def draw_window(surface, grid):
     surface.fill((0, 0, 0))
-
     pygame.font.init()
     font = pygame.font.SysFont('malgungothicsemilight', 60)
     label = font.render('Tetris', 1, (255, 255, 255))
@@ -262,10 +262,7 @@ def draw_window(surface, grid):
                                                    top_left_y + (i - 3) *
                                                    block_size, block_size,
                                                    block_size), 0)
-
     draw_grid(surface, grid)
-    pygame.draw.rect(surface, (255, 255, 255), (top_left_x, top_left_y,
-                                                play_width, play_height), 4)
 
 
 # returns True if a key is currently pressed, otherwise False
@@ -306,6 +303,53 @@ def draw_hold_piece(piece, surface, held):
     surface.blit(label, (sx, sy))
 
 
+def is_valid_locked(piece, locked):
+    formatted = convert_shape_format(piece)
+    for pos in formatted:
+        if pos[1] > 22:
+            return False
+        if pos in locked:
+            return False
+    return True
+
+
+def move_to_lowest(piece, locked):
+    drop = True
+    while drop:
+        piece.y += 1
+        if not is_valid_locked(piece, locked):
+            drop = False
+    piece.y -= 1
+    return piece.y
+
+
+# draws a ghost piece that shows where the piece would fall if hard dropped
+def draw_piece_guideline(piece, surface, grid, locked):
+    temp = Piece(piece.x, piece.y, piece.shape)
+    temp.rotation = piece.rotation
+    temp.y = move_to_lowest(temp, locked)
+    formatted = convert_shape_format(temp)
+    for pair in formatted:
+        if grid[pair[1]][pair[0]] == (0, 0, 0):
+            x = top_left_x + pair[0] * block_size
+            y = top_left_y + (pair[1] - 3) * block_size
+            w = block_size
+            h = block_size
+            width = 4
+            width = min(min(width, w // 2), h // 2)
+            for i in range(width):
+                pygame.gfxdraw.rectangle(surface, (x + i, y + i, w - i * 2 +
+                                         1, h - i * 2 + 1), (81, 81, 77))
+            for i in range(width + 4, width + 6):
+                pygame.gfxdraw.rectangle(surface, (x + i, y + i, w - i * 2 +
+                                         1, h - i * 2 + 1), (81, 81, 77))
+
+
+def draw_border(surface):
+    pygame.draw.rect(surface, (255, 255, 255), (top_left_x, top_left_y,
+                                                play_width, play_height), 4)
+
+
 # main game logic
 def main(surface):
     locked_positions = {}
@@ -325,6 +369,7 @@ def main(surface):
         fall_time += clock.get_rawtime()
         clock.tick()
 
+        # timer check for auto dropping
         if fall_time / 1000 > fall_speed:
             fall_time = 0
             current_piece.y += 1
@@ -335,11 +380,13 @@ def main(surface):
                 change_piece = True
                 fall_speed = 0.6
 
+        # if down key is pressed, just speed up auto drop, same as soft drop
         if key_pressed(pygame.K_DOWN):
             fall_speed = 0.03
         else:
             fall_speed = 0.6
 
+        # if we need to change the piece, do so and update the locked positions
         if change_piece:
             for pos in shape_pos:
                 p = (pos[0], pos[1])
@@ -352,37 +399,46 @@ def main(surface):
             fall_time = 10000
             is_hold = False
 
+        # check keypresses and end game
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             if event.type == pygame.KEYDOWN:
+                # move left
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
                     if not (valid_move(current_piece, grid)):
                         current_piece.x += 1
+                # move right
                 if event.key == pygame.K_RIGHT:
                     current_piece.x += 1
                     if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
+                # rotate left
                 if event.key == pygame.K_z:
                     current_piece.rotate_left()
+                    # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
                     if delta == (None, None):
                         current_piece.rotate_right()
                     else:
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
+                # rotate right
                 if event.key == pygame.K_x:
                     current_piece.rotate_right()
+                    # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
                     if delta == (None, None):
                         current_piece.rotate_left()
                     else:
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
+                # hard drop
                 if event.key == pygame.K_SPACE:
                     hard_drop(current_piece, grid)
                     change_piece = True
+                # hold piece
                 if event.key == pygame.K_c:
                     # would implement as function but python pass by
                     # reference or whatever it is is weird
@@ -405,14 +461,19 @@ def main(surface):
 
         shape_pos = convert_shape_format(current_piece)
 
+        # update grid with current piece position
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
             grid[y][x] = current_piece.color
 
+        # draw everything
         draw_window(surface, grid)
+        draw_piece_guideline(current_piece, surface, grid, locked_positions)
+        draw_border(surface)
         draw_next_shape(next_piece, surface)
-        held = hold_piece is not None
-        draw_hold_piece(hold_piece, surface, held)
+        draw_hold_piece(hold_piece, surface, hold_piece is not None)
+
+        # update screen
         pygame.display.update()
     pygame.display.quit()
 
@@ -429,7 +490,6 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# implement hold \/
 # implement non insta lock for soft drop
-# implement piece drop guideline
+# implement piece drop guideline \/
 # implement DAS
