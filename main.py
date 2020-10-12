@@ -377,7 +377,8 @@ def main(surface):
                 current_piece.y -= 1
                 if check_lost(convert_shape_format(current_piece)):
                     run = False
-                change_piece = True
+                else:
+                    change_piece = True
                 fall_speed = 0.6
 
         # if down key is pressed, just speed up auto drop, same as soft drop
@@ -403,19 +404,16 @@ def main(surface):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.KEYDOWN:
-                # move left
+            if event.type == pygame.KEYDOWN:  # move left
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
                     if not (valid_move(current_piece, grid)):
                         current_piece.x += 1
-                # move right
-                if event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT:  # move right
                     current_piece.x += 1
                     if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
-                # rotate left
-                if event.key == pygame.K_z:
+                if event.key == pygame.K_z:  # rotate left
                     current_piece.rotate_left()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
@@ -424,8 +422,7 @@ def main(surface):
                     else:
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
-                # rotate right
-                if event.key == pygame.K_x:
+                if event.key == pygame.K_x:  # rotate right
                     current_piece.rotate_right()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
@@ -437,7 +434,8 @@ def main(surface):
                 # hard drop
                 if event.key == pygame.K_SPACE:
                     hard_drop(current_piece, grid)
-                    change_piece = True
+                    if not check_lost(convert_shape_format(current_piece)):
+                        change_piece = True
                 # hold piece
                 if event.key == pygame.K_c:
                     # would implement as function but python pass by
@@ -487,9 +485,8 @@ win = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Tetris')
 icon = pygame.image.load('tetris.png')
 pygame.display.set_icon(icon)
-main_menu(win)  # start game
+main_menu(win)
 
 # TODO:
 # implement non insta lock for soft drop
-# implement piece drop guideline \/
 # implement DAS
