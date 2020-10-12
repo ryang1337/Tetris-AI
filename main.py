@@ -58,6 +58,7 @@ SHAPE_COLORS = [(206, 221, 226), (126, 164, 179), (255, 179, 71),
 # index 0 - 6 represent shape
 
 
+# class for Tetrominoes
 class Piece(object):
     def __init__(self, x, y, shape):
         self.x = x
@@ -79,6 +80,7 @@ class Piece(object):
             self.rotation += 1
 
 
+# draws the colors for each square in the grid depending on the locked positions
 def create_grid(locked_pos={}):
     grid = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
 
@@ -173,6 +175,7 @@ def get_possible_rotates(piece, grid, direction):
     return kick_delta
 
 
+# checks whether or not the player has lost
 def check_lost(positions):
     for pos in positions:
         x, y = pos
@@ -181,6 +184,8 @@ def check_lost(positions):
     return True
 
 
+# returns a Piece object using the Random Generator algorithm
+# (7-piece bag)
 def get_shape():
     if len(SHAPE_Q) == 0:
         for s in SHAPES:
@@ -190,10 +195,7 @@ def get_shape():
     return Piece(3, 0, shape)
 
 
-def draw_text_middle(text, size, color, surface):
-    pass
-
-
+# draws the lines for the play grid
 def draw_grid(surface, grid):
     sx = top_left_x
     sy = top_left_y
@@ -206,13 +208,12 @@ def draw_grid(surface, grid):
                          (sx + j * block_size, sy + play_height))
 
 
+# checks if a row needs to be cleared and moves rows above it down
 def clear_rows(grid, locked):
     cleared_below = 0
     for i in range(len(grid) - 1, 2, -1):
         row = grid[i]
-        print(row)
         if (0, 0, 0) not in row:
-            print('here')
             cleared_below += 1
             for j in range(len(row)):
                 del locked[(j, i)]
@@ -224,6 +225,7 @@ def clear_rows(grid, locked):
                         del locked[(j, i)]
 
 
+# draws the shape in the 'next' area
 def draw_next_shape(piece, surface):
     font = pygame.font.SysFont('malgungothicsemilight', 30)
     label = font.render('Next', 1, (255, 255, 255))
@@ -243,6 +245,7 @@ def draw_next_shape(piece, surface):
     surface.blit(label, (sx, sy))
 
 
+# draws
 def draw_window(surface, grid):
     surface.fill((0, 0, 0))
 
@@ -265,6 +268,7 @@ def draw_window(surface, grid):
                                                 play_width, play_height), 4)
 
 
+# returns True if a key is currently pressed, otherwise False
 def key_pressed(input_key):
     keys_pressed = pygame.key.get_pressed()
     if keys_pressed[input_key]:
@@ -273,6 +277,7 @@ def key_pressed(input_key):
         return False
 
 
+# implementation of hard drop feature
 def hard_drop(piece, grid):
     piece.y += 1
     while valid_move(piece, grid):
@@ -280,6 +285,28 @@ def hard_drop(piece, grid):
     piece.y -= 1
 
 
+# draws the piece in the 'hold' sections
+def draw_hold_piece(piece, surface, held):
+    font = pygame.font.SysFont('malgungothicsemilight', 30)
+    label = font.render('Hold', 1, (255, 255, 255))
+    label_w, label_h = font.size('Hold')
+    sx = top_left_x / 2 - label_w / 2
+    sy = top_left_y
+    if held:
+        if piece.shape == I or piece.shape == O:
+            px = top_left_x / 2 - 2 * block_size
+        else:
+            px = top_left_x / 2 - 1.5 * block_size
+        py = sy + block_size + label_h
+        formatted = get_piece_format(piece)
+        for pair in formatted:
+            pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
+                                                    py + pair[0] * block_size,
+                                                    block_size, block_size), 0)
+    surface.blit(label, (sx, sy))
+
+
+# main game logic
 def main(surface):
     locked_positions = {}
 
@@ -290,6 +317,8 @@ def main(surface):
     clock = pygame.time.Clock()
     fall_time = 0
     fall_speed = 0.6
+    is_hold = False
+    hold_piece = None
 
     while run:
         grid = create_grid(locked_positions)
@@ -321,6 +350,7 @@ def main(surface):
             change_piece = False
             clear_rows(grid, locked_positions)
             fall_time = 10000
+            is_hold = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -353,6 +383,26 @@ def main(surface):
                 if event.key == pygame.K_SPACE:
                     hard_drop(current_piece, grid)
                     change_piece = True
+                if event.key == pygame.K_c:
+                    # would implement as function but python pass by
+                    # reference or whatever it is is weird
+                    if not is_hold:
+                        if hold_piece is None:
+                            hold_piece = current_piece
+                            hold_piece.x = 3
+                            hold_piece.y = 0
+                            hold_piece.rotation = 0
+                            current_piece = next_piece
+                            next_piece = get_shape()
+                        else:
+                            temp = current_piece
+                            current_piece = hold_piece
+                            hold_piece = temp
+                            hold_piece.x = 3
+                            hold_piece.y = 0
+                            hold_piece.rotation = 0
+                        is_hold = True
+
         shape_pos = convert_shape_format(current_piece)
 
         for i in range(len(shape_pos)):
@@ -361,10 +411,13 @@ def main(surface):
 
         draw_window(surface, grid)
         draw_next_shape(next_piece, surface)
+        held = hold_piece is not None
+        draw_hold_piece(hold_piece, surface, held)
         pygame.display.update()
     pygame.display.quit()
 
 
+# main menu logic
 def main_menu(window):
     main(window)
 
@@ -376,8 +429,7 @@ pygame.display.set_icon(icon)
 main_menu(win)  # start game
 
 # TODO:
-# implement line clear \/
-# implement hold
+# implement hold \/
 # implement non insta lock for soft drop
-# implement piece drop preview
+# implement piece drop guideline
 # implement DAS
