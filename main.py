@@ -359,15 +359,25 @@ def main(surface):
     current_piece = get_shape()
     next_piece = get_shape()
     clock = pygame.time.Clock()
+    rotate_count = 0
     fall_time = 0
     fall_speed = 0.6
+    lock_delay = 0.6
+    lock_time = 0
     is_hold = False
     hold_piece = None
+    is_lock = False
+    lock_y = 0
 
     while run:
         grid = create_grid(locked_positions)
         fall_time += clock.get_rawtime()
         clock.tick()
+        if is_lock:
+            lock_time += clock.get_rawtime()
+            if current_piece.y > lock_y + 3:
+                lock_time = 0
+                is_lock = False
 
         # timer check for auto dropping
         if fall_time / 1000 > fall_speed:
@@ -375,11 +385,16 @@ def main(surface):
             current_piece.y += 1
             if not (valid_move(current_piece, grid)) and current_piece.y > -1:
                 current_piece.y -= 1
-                if check_lost(convert_shape_format(current_piece)):
-                    run = False
-                else:
-                    change_piece = True
-                fall_speed = 0.6
+                if is_lock is False:
+                    lock_y = current_piece.y
+                is_lock = True
+                if lock_time / 1000 > lock_delay:
+                    if check_lost(convert_shape_format(current_piece)):
+                        run = False
+                    else:
+                        change_piece = True
+                    is_lock = False
+                    lock_time = 0
 
         # if down key is pressed, just speed up auto drop, same as soft drop
         if key_pressed(pygame.K_DOWN):
@@ -414,6 +429,9 @@ def main(surface):
                     if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
                 if event.key == pygame.K_z:  # rotate left
+                    rotate_count += 1
+                    if rotate_count < 10:
+                        lock_time = 0
                     current_piece.rotate_left()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
@@ -423,6 +441,9 @@ def main(surface):
                         current_piece.x += delta[0]
                         current_piece.y += delta[1]
                 if event.key == pygame.K_x:  # rotate right
+                    rotate_count += 1
+                    if rotate_count < 10:
+                        lock_time = 0
                     current_piece.rotate_right()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
@@ -488,5 +509,5 @@ pygame.display.set_icon(icon)
 main_menu(win)
 
 # TODO:
-# implement non insta lock for soft drop
+# implement non insta lock for soft drop \/
 # implement DAS
