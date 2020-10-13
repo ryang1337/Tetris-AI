@@ -147,14 +147,14 @@ def get_possible_rotates(piece, grid, direction):
         if direction == 'left':
             for pos in I_WALL_KICK_LEFT[temp.rotation]:
                 temp.x = piece.x + pos[0]
-                temp.y = piece.y + pos[1]
+                temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
         else:
             for pos in I_WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
-                temp.y = piece.y + pos[1]
+                temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
@@ -162,14 +162,14 @@ def get_possible_rotates(piece, grid, direction):
         if direction == 'left':
             for pos in WALL_KICK_LEFT[temp.rotation]:
                 temp.x = piece.x + pos[0]
-                temp.y = piece.y + pos[1]
+                temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
         else:
             for pos in WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
-                temp.y = piece.y + pos[1]
+                temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
@@ -435,11 +435,12 @@ def main(surface):
                     current_piece.rotate_left()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
+                    print(delta)
                     if delta == (None, None):
                         current_piece.rotate_right()
                     else:
                         current_piece.x += delta[0]
-                        current_piece.y += delta[1]
+                        current_piece.y -= delta[1]
                 if event.key == pygame.K_x:  # rotate right
                     rotate_count += 1
                     if rotate_count < 10:
@@ -447,11 +448,12 @@ def main(surface):
                     current_piece.rotate_right()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
+                    print(delta)
                     if delta == (None, None):
                         current_piece.rotate_left()
                     else:
                         current_piece.x += delta[0]
-                        current_piece.y += delta[1]
+                        current_piece.y -= delta[1]
                 # hard drop
                 if event.key == pygame.K_SPACE:
                     hard_drop(current_piece, grid)
@@ -509,5 +511,4 @@ pygame.display.set_icon(icon)
 main_menu(win)
 
 # TODO:
-# implement non insta lock for soft drop \/
 # implement DAS
