@@ -378,6 +378,7 @@ def main(surface):
             if current_piece.y > lock_y + 3:
                 lock_time = 0
                 is_lock = False
+                rotate_count = 0
 
         # timer check for auto dropping
         if fall_time / 1000 > fall_speed:
@@ -395,6 +396,7 @@ def main(surface):
                         change_piece = True
                     is_lock = False
                     lock_time = 0
+                    rotate_count = 0
 
         # if down key is pressed, just speed up auto drop, same as soft drop
         if key_pressed(pygame.K_DOWN):
@@ -429,26 +431,28 @@ def main(surface):
                     if not (valid_move(current_piece, grid)):
                         current_piece.x -= 1
                 if event.key == pygame.K_z:  # rotate left
-                    rotate_count += 1
+                    if is_lock:
+                        rotate_count += 1
                     if rotate_count < 10:
                         lock_time = 0
+                    print(rotate_count, lock_time)
                     current_piece.rotate_left()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
-                    print(delta)
                     if delta == (None, None):
                         current_piece.rotate_right()
                     else:
                         current_piece.x += delta[0]
                         current_piece.y -= delta[1]
                 if event.key == pygame.K_x:  # rotate right
-                    rotate_count += 1
+                    if is_lock:
+                        rotate_count += 1
                     if rotate_count < 10:
                         lock_time = 0
+                    print(rotate_count, lock_time)
                     current_piece.rotate_right()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
-                    print(delta)
                     if delta == (None, None):
                         current_piece.rotate_left()
                     else:
@@ -456,6 +460,9 @@ def main(surface):
                         current_piece.y -= delta[1]
                 # hard drop
                 if event.key == pygame.K_SPACE:
+                    rotate_count = 0
+                    lock_time = 0
+                    is_lock = False
                     hard_drop(current_piece, grid)
                     if not check_lost(convert_shape_format(current_piece)):
                         change_piece = True
@@ -464,6 +471,9 @@ def main(surface):
                     # would implement as function but python pass by
                     # reference or whatever it is is weird
                     if not is_hold:
+                        rotate_count = 0
+                        lock_time = 0
+                        is_lock = False
                         if hold_piece is None:
                             hold_piece = current_piece
                             hold_piece.x = 3
