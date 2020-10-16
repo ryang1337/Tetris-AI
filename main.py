@@ -1,158 +1,52 @@
 import pygame
-from pygame import gfxdraw
 import random
-import copy
+import Piece
+import Grid
 
 pygame.font.init()
 
-# GLOBALS VARS
 s_width = 800
 s_height = 700
-play_width = 300  # meaning 300 // 10 = 30 width per block
-play_height = 600  # meaning 600 // 20 = 30 height per block
+play_width = 300
+play_height = 600
 block_size = 30
 
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
 
-# SHAPE FORMATS
-
-I = [[1, 0], [1, 1], [1, 2], [1, 3]]
-
-J = [[0, 0], [1, 0], [1, 1], [1, 2]]
-
-L = [[1, 0], [1, 1], [1, 2], [0, 2]]
-
-O = [[0, 1], [0, 2], [1, 1], [1, 2]]
-
-S = [[0, 1], [0, 2], [1, 0], [1, 1]]
-
-T = [[0, 1], [1, 0], [1, 1], [1, 2]]
-
-Z = [[0, 0], [0, 1], [1, 1], [1, 2]]
-
-# wall kick data
-I_WALL_KICK_RIGHT = [[(0, 0), (1, 0), (-2, 0), (1, -2), (-2, 1)],
-                     [(0, 0), (-2, 0), (1, 0), (-2, -1), (1, 2)],
-                     [(0, 0), (-1, 0), (2, 0), (-1, 2), (2, -1)],
-                     [(0, 0), (2, 0), (-1, 0), (2, 1), (-1, -2)]]
-I_WALL_KICK_LEFT = [[(0, 0), (2, 0), (-1, 0), (2, 1), (-1, -2)],
-                    [(0, 0), (1, 0), (-2, 0), (1, -2), (-2, 1)],
-                    [(0, 0), (-2, 0), (1, 0), (-2, -1), (1, 2)],
-                    [(0, 0), (-1, 0), (2, 0), (-1, 2), (2, -1)]]
-WALL_KICK_RIGHT = [[(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
-                   [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
-                   [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
-                   [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)]]
-WALL_KICK_LEFT = [[(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
-                  [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
-                  [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
-                  [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)]]
-
-SHAPES = [I, J, L, O, S, T, Z]
-SHAPE_Q = [I, J, L, O, S, T, Z]
-SHAPE_COLORS = [(206, 221, 226), (126, 164, 179), (255, 179, 71),
-                (253, 253, 150), (119, 221, 119), (177, 156, 217),
-                (255, 105, 97)]
-
-
-# index 0 - 6 represent shape
-
-
-# class for Tetrominoes
-class Piece(object):
-    def __init__(self, x, y, shape):
-        self.x = x
-        self.y = y
-        self.shape = shape
-        self.color = SHAPE_COLORS[SHAPES.index(shape)]
-        self.rotation = 0
-
-    def rotate_left(self):
-        if self.rotation == 0:
-            self.rotation = 3
-        else:
-            self.rotation -= 1
-
-    def rotate_right(self):
-        if self.rotation == 3:
-            self.rotation = 0
-        else:
-            self.rotation += 1
-
-
-# draws the colors for each square in the grid depending on the locked positions
-def create_grid(locked_pos={}):
-    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
-
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if (j, i) in locked_pos:
-                color = locked_pos[(j, i)]
-                grid[i][j] = color
-    return grid
-
-
-# returns the list of positions of each mino in the tetromino relative to itself
-# after calculating the rotation
-def get_piece_format(piece):
-    f = copy.deepcopy(piece.shape)
-    if f != O:
-        for i in range(piece.rotation):
-            for pair in f:
-                temp = pair[0]
-                pair[0] = pair[1]
-                pair[1] = temp
-            if piece.shape == I:
-                for pair in f:
-                    pair[1] = 3 - pair[1]
-            else:
-                for pair in f:
-                    pair[1] = 2 - pair[1]
-    return f
-
-
-# returns the position of each mino in the tetromino relative to the top left
-# corner of the screen
-def convert_shape_format(piece):
-    piece_format = get_piece_format(piece)
-    positions = []
-    for pair in piece_format:
-        positions.append((piece.x + pair[1], piece.y + pair[0]))
-
-    return positions
-
 
 # returns whether or not the piece is in a valid position
 def valid_move(piece, grid):
-    formatted = convert_shape_format(piece)
+    print(grid)
+    formatted = piece.convert_shape_format()
     for pos in formatted:
-        if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] <
-                play_height / block_size + 3):
+        if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] < play_height / block_size
+                + 3):
             return False
         if pos[1] >= 0:
             if not (grid[pos[1]][pos[0]] == (0, 0, 0)):
+                print("hi2")
                 return False
     return True
 
 
-# returns the change in position for a rotation to be valid and returns a tuple
-# with the x and y delta. if there are no possible positions, returns a tuple
-# with None and None
+# returns the change in position for a rotation to be valid and returns a
+# tuple with the x and y delta. if there are no possible positions,
+# returns a tuple with None and None
 def get_possible_rotates(piece, grid, direction):
     kick_delta = (None, None)
-    temp = Piece(piece.x, piece.y, piece.shape)
+    temp = Piece.Piece(piece.x, piece.y, piece.shape)
     temp.rotation = piece.rotation
-    if piece.shape == I:
+    if piece.shape == Piece.I:
         if direction == 'left':
-            for pos in I_WALL_KICK_LEFT[temp.rotation]:
+            for pos in Piece.I_WALL_KICK_LEFT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
         else:
-            for pos in I_WALL_KICK_RIGHT[temp.rotation]:
+            for pos in Piece.I_WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
@@ -160,19 +54,20 @@ def get_possible_rotates(piece, grid, direction):
                     break
     else:
         if direction == 'left':
-            for pos in WALL_KICK_LEFT[temp.rotation]:
+            for pos in Piece.WALL_KICK_LEFT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
         else:
-            for pos in WALL_KICK_RIGHT[temp.rotation]:
+            for pos in Piece.WALL_KICK_RIGHT[temp.rotation]:
                 temp.x = piece.x + pos[0]
                 temp.y = piece.y - pos[1]
                 if valid_move(temp, grid):
                     kick_delta = pos
                     break
+
     return kick_delta
 
 
@@ -188,12 +83,12 @@ def check_lost(positions):
 # returns a Piece object using the Random Generator algorithm
 # (7-piece bag)
 def get_shape():
-    if len(SHAPE_Q) == 0:
-        for s in SHAPES:
-            SHAPE_Q.append(s)
-    shape = random.choice(SHAPE_Q)
-    SHAPE_Q.remove(shape)
-    return Piece(3, 0, shape)
+    if len(Piece.SHAPE_Q) == 0:
+        for s in Piece.SHAPES:
+            Piece.SHAPE_Q.append(s)
+    shape = random.choice(Piece.SHAPE_Q)
+    Piece.SHAPE_Q.remove(shape)
+    return Piece.Piece(3, 0, shape)
 
 
 # draws the lines for the play grid
@@ -212,7 +107,7 @@ def draw_grid(surface, grid):
 # checks if a row needs to be cleared and moves rows above it down
 def clear_rows(grid, locked):
     cleared_below = 0
-    for i in range(len(grid) - 1, 1, -1):
+    for i in range(len(grid) - 1, 0, -1):
         row = grid[i]
         if (0, 0, 0) not in row:
             cleared_below += 1
@@ -233,12 +128,12 @@ def draw_next_shape(piece, surface):
     label_w, label_h = font.size('Next')
     sx = (2 * s_width - top_left_x) / 2 - label_w / 2
     sy = top_left_y
-    if piece.shape == I or piece.shape == O:
+    if piece.shape == Piece.I or piece.shape == Piece.O:
         px = (2 * s_width - top_left_x) / 2 - 2 * block_size
     else:
         px = (2 * s_width - top_left_x) / 2 - 1.5 * block_size
     py = sy + block_size + label_h
-    formatted = get_piece_format(piece)
+    formatted = piece.get_piece_format()
     for pair in formatted:
         pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
                                                 py + pair[0] * block_size,
@@ -290,59 +185,17 @@ def draw_hold_piece(piece, surface, held):
     sx = top_left_x / 2 - label_w / 2
     sy = top_left_y
     if held:
-        if piece.shape == I or piece.shape == O:
+        if piece.shape == Piece.I or piece.shape == Piece.O:
             px = top_left_x / 2 - 2 * block_size
         else:
             px = top_left_x / 2 - 1.5 * block_size
         py = sy + block_size + label_h
-        formatted = get_piece_format(piece)
+        formatted = piece.get_piece_format()
         for pair in formatted:
             pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
                                                     py + pair[0] * block_size,
                                                     block_size, block_size), 0)
     surface.blit(label, (sx, sy))
-
-
-def is_valid_locked(piece, locked):
-    formatted = convert_shape_format(piece)
-    for pos in formatted:
-        if pos[1] > 22:
-            return False
-        if pos in locked:
-            return False
-    return True
-
-
-def move_to_lowest(piece, locked):
-    drop = True
-    while drop:
-        piece.y += 1
-        if not is_valid_locked(piece, locked):
-            drop = False
-    piece.y -= 1
-    return piece.y
-
-
-# draws a ghost piece that shows where the piece would fall if hard dropped
-def draw_piece_guideline(piece, surface, grid, locked):
-    temp = Piece(piece.x, piece.y, piece.shape)
-    temp.rotation = piece.rotation
-    temp.y = move_to_lowest(temp, locked)
-    formatted = convert_shape_format(temp)
-    for pair in formatted:
-        if grid[pair[1]][pair[0]] == (0, 0, 0):
-            x = top_left_x + pair[0] * block_size
-            y = top_left_y + (pair[1] - 3) * block_size
-            w = block_size
-            h = block_size
-            width = 4
-            width = min(min(width, w // 2), h // 2)
-            for i in range(width):
-                pygame.gfxdraw.rectangle(surface, (x + i, y + i, w - i * 2 +
-                                         1, h - i * 2 + 1), (81, 81, 77))
-            for i in range(width + 4, width + 6):
-                pygame.gfxdraw.rectangle(surface, (x + i, y + i, w - i * 2 +
-                                         1, h - i * 2 + 1), (81, 81, 77))
 
 
 def draw_border(surface):
@@ -356,21 +209,29 @@ def main(surface):
 
     change_piece = False
     run = True
-    current_piece = get_shape()
+
     next_piece = get_shape()
+    current_piece = get_shape()
+
     clock = pygame.time.Clock()
-    rotate_count = 0
+
     fall_time = 0
     fall_speed = 0.6
+
     lock_delay = 0.6
     lock_time = 0
+    lock_y = 0
+    rotate_count = 0
+    is_lock = False
+
     is_hold = False
     hold_piece = None
-    is_lock = False
-    lock_y = 0
+
+    matrix = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
+    play_grid = Grid.Grid(matrix)
 
     while run:
-        grid = create_grid(locked_positions)
+        play_grid.update_grid(locked_positions)
         fall_time += clock.get_rawtime()
         clock.tick()
         if is_lock:
@@ -384,13 +245,13 @@ def main(surface):
         if fall_time / 1000 > fall_speed:
             fall_time = 0
             current_piece.y += 1
-            if not (valid_move(current_piece, grid)) and current_piece.y > -1:
+            if not (valid_move(current_piece, play_grid.grid)) and current_piece.y > -1:
                 current_piece.y -= 1
                 if is_lock is False:
                     lock_y = current_piece.y
                 is_lock = True
                 if lock_time / 1000 > lock_delay:
-                    if check_lost(convert_shape_format(current_piece)):
+                    if check_lost(current_piece.convert_shape_format()):
                         run = False
                     else:
                         change_piece = True
@@ -409,11 +270,11 @@ def main(surface):
             for pos in shape_pos:
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
-            grid = create_grid(locked_positions)
+            play_grid.update_grid(locked_positions)
             current_piece = next_piece
             next_piece = get_shape()
             change_piece = False
-            clear_rows(grid, locked_positions)
+            clear_rows(play_grid.grid, locked_positions)
             fall_time = 10000
             is_hold = False
 
@@ -424,11 +285,11 @@ def main(surface):
             if event.type == pygame.KEYDOWN:  # move left
                 if event.key == pygame.K_LEFT:
                     current_piece.x -= 1
-                    if not (valid_move(current_piece, grid)):
+                    if not (valid_move(current_piece, play_grid.grid)):
                         current_piece.x += 1
                 if event.key == pygame.K_RIGHT:  # move right
                     current_piece.x += 1
-                    if not (valid_move(current_piece, grid)):
+                    if not (valid_move(current_piece, play_grid.grid)):
                         current_piece.x -= 1
                 if event.key == pygame.K_z:  # rotate left
                     if is_lock:
@@ -437,7 +298,7 @@ def main(surface):
                         lock_time = 0
                     current_piece.rotate_left()
                     # check wall kick data
-                    delta = get_possible_rotates(current_piece, grid, 'left')
+                    delta = get_possible_rotates(current_piece, play_grid.grid, 'left')
                     if delta == (None, None):
                         current_piece.rotate_right()
                     else:
@@ -450,7 +311,7 @@ def main(surface):
                         lock_time = 0
                     current_piece.rotate_right()
                     # check wall kick data
-                    delta = get_possible_rotates(current_piece, grid, 'right')
+                    delta = get_possible_rotates(current_piece, play_grid.grid, 'right')
                     if delta == (None, None):
                         current_piece.rotate_left()
                     else:
@@ -461,8 +322,8 @@ def main(surface):
                     rotate_count = 0
                     lock_time = 0
                     is_lock = False
-                    hard_drop(current_piece, grid)
-                    if not check_lost(convert_shape_format(current_piece)):
+                    hard_drop(current_piece, play_grid.grid)
+                    if not check_lost(current_piece.convert_shape_format()):
                         change_piece = True
                 # hold piece
                 if event.key == pygame.K_c:
@@ -488,16 +349,16 @@ def main(surface):
                             hold_piece.rotation = 0
                         is_hold = True
 
-        shape_pos = convert_shape_format(current_piece)
+        shape_pos = current_piece.convert_shape_format()
 
         # update grid with current piece position
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
-            grid[y][x] = current_piece.color
+            play_grid.grid[y][x] = current_piece.color
 
         # draw everything
-        draw_window(surface, grid)
-        draw_piece_guideline(current_piece, surface, grid, locked_positions)
+        draw_window(surface, play_grid.grid)
+        play_grid.draw_piece_guideline(current_piece, surface, locked_positions)
         draw_border(surface)
         draw_next_shape(next_piece, surface)
         draw_hold_piece(hold_piece, surface, hold_piece is not None)
@@ -507,16 +368,8 @@ def main(surface):
     pygame.display.quit()
 
 
-# main menu logic
-def main_menu(window):
-    main(window)
-
-
 win = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Tetris')
 icon = pygame.image.load('tetris.png')
 pygame.display.set_icon(icon)
-main_menu(win)
-
-# TODO:
-# implement DAS
+main(win)
