@@ -17,7 +17,6 @@ top_left_y = s_height - play_height
 
 # returns whether or not the piece is in a valid position
 def valid_move(piece, grid):
-    print(grid)
     formatted = piece.convert_shape_format()
     for pos in formatted:
         if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] < play_height / block_size
@@ -25,7 +24,6 @@ def valid_move(piece, grid):
             return False
         if pos[1] >= 0:
             if not (grid[pos[1]][pos[0]] == (0, 0, 0)):
-                print("hi2")
                 return False
     return True
 
