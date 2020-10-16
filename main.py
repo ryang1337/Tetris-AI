@@ -212,7 +212,7 @@ def draw_grid(surface, grid):
 # checks if a row needs to be cleared and moves rows above it down
 def clear_rows(grid, locked):
     cleared_below = 0
-    for i in range(len(grid) - 1, 2, -1):
+    for i in range(len(grid) - 1, 1, -1):
         row = grid[i]
         if (0, 0, 0) not in row:
             cleared_below += 1
@@ -435,7 +435,6 @@ def main(surface):
                         rotate_count += 1
                     if rotate_count < 10:
                         lock_time = 0
-                    print(rotate_count, lock_time)
                     current_piece.rotate_left()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'left')
@@ -449,7 +448,6 @@ def main(surface):
                         rotate_count += 1
                     if rotate_count < 10:
                         lock_time = 0
-                    print(rotate_count, lock_time)
                     current_piece.rotate_right()
                     # check wall kick data
                     delta = get_possible_rotates(current_piece, grid, 'right')
