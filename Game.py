@@ -5,21 +5,29 @@ import Grid
 
 pygame.font.init()
 
-s_width = 800
-s_height = 700
-play_width = 300
-play_height = 600
-block_size = 30
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 700
+PLAY_WIDTH = 300
+PLAY_HEIGHT = 600
+BLOCK_SIZE = 30
 
-top_left_x = (s_width - play_width) // 2
-top_left_y = s_height - play_height
+TOP_LEFT_X = (SCREEN_WIDTH - PLAY_WIDTH) // 2
+TOP_LEFT_Y = SCREEN_HEIGHT - PLAY_HEIGHT
 
+
+class Game:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        pass
+        
 
 # returns whether or not the piece is in a valid position
 def valid_move(piece, grid):
     formatted = piece.convert_shape_format()
     for pos in formatted:
-        if not (0 <= pos[0] < play_width / block_size and 0 <= pos[1] < play_height / block_size
+        if not (0 <= pos[0] < PLAY_WIDTH / BLOCK_SIZE and 0 <= pos[1] < PLAY_HEIGHT / BLOCK_SIZE
                 + 3):
             return False
         if pos[1] >= 0:
@@ -91,15 +99,15 @@ def get_shape():
 
 # draws the lines for the play grid
 def draw_grid(surface, grid):
-    sx = top_left_x
-    sy = top_left_y
+    sx = TOP_LEFT_X
+    sy = TOP_LEFT_Y
 
     for i in range(1, len(grid)):
-        pygame.draw.line(surface, (81, 81, 77), (sx, sy + i * block_size),
-                         (sx + play_width, sy + i * block_size))
+        pygame.draw.line(surface, (81, 81, 77), (sx, sy + i * BLOCK_SIZE),
+                         (sx + PLAY_WIDTH, sy + i * BLOCK_SIZE))
     for j in range(1, len(grid[0])):
-        pygame.draw.line(surface, (81, 81, 77), (sx + j * block_size, sy),
-                         (sx + j * block_size, sy + play_height))
+        pygame.draw.line(surface, (81, 81, 77), (sx + j * BLOCK_SIZE, sy),
+                         (sx + j * BLOCK_SIZE, sy + PLAY_HEIGHT))
 
 
 # checks if a row needs to be cleared and moves rows above it down
@@ -124,18 +132,18 @@ def draw_next_shape(piece, surface):
     font = pygame.font.SysFont('malgungothicsemilight', 30)
     label = font.render('Next', 1, (255, 255, 255))
     label_w, label_h = font.size('Next')
-    sx = (2 * s_width - top_left_x) / 2 - label_w / 2
-    sy = top_left_y
+    sx = (2 * SCREEN_WIDTH - TOP_LEFT_X) / 2 - label_w / 2
+    sy = TOP_LEFT_Y
     if piece.shape == Piece.I or piece.shape == Piece.O:
-        px = (2 * s_width - top_left_x) / 2 - 2 * block_size
+        px = (2 * SCREEN_WIDTH - TOP_LEFT_X) / 2 - 2 * BLOCK_SIZE
     else:
-        px = (2 * s_width - top_left_x) / 2 - 1.5 * block_size
-    py = sy + block_size + label_h
+        px = (2 * SCREEN_WIDTH - TOP_LEFT_X) / 2 - 1.5 * BLOCK_SIZE
+    py = sy + BLOCK_SIZE + label_h
     formatted = piece.get_piece_format()
     for pair in formatted:
-        pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
-                                                py + pair[0] * block_size,
-                                                block_size, block_size), 0)
+        pygame.draw.rect(surface, piece.color, (px + pair[1] * BLOCK_SIZE,
+                                                py + pair[0] * BLOCK_SIZE,
+                                                BLOCK_SIZE, BLOCK_SIZE), 0)
     surface.blit(label, (sx, sy))
 
 
@@ -146,15 +154,15 @@ def draw_window(surface, grid):
     font = pygame.font.SysFont('malgungothicsemilight', 60)
     label = font.render('Tetris', 1, (255, 255, 255))
 
-    surface.blit(label, (top_left_x + play_width / 2 - label.get_width() /
-                         2, play_height / 25))
+    surface.blit(label, (TOP_LEFT_X + PLAY_WIDTH / 2 - label.get_width() /
+                         2, PLAY_HEIGHT / 25))
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (top_left_x + j * block_size,
-                                                   top_left_y + (i - 3) *
-                                                   block_size, block_size,
-                                                   block_size), 0)
+            pygame.draw.rect(surface, grid[i][j], (TOP_LEFT_X + j * BLOCK_SIZE,
+                                                   TOP_LEFT_Y + (i - 3) *
+                                                   BLOCK_SIZE, BLOCK_SIZE,
+                                                   BLOCK_SIZE), 0)
     draw_grid(surface, grid)
 
 
@@ -180,25 +188,25 @@ def draw_hold_piece(piece, surface, held):
     font = pygame.font.SysFont('malgungothicsemilight', 30)
     label = font.render('Hold', 1, (255, 255, 255))
     label_w, label_h = font.size('Hold')
-    sx = top_left_x / 2 - label_w / 2
-    sy = top_left_y
+    sx = TOP_LEFT_X / 2 - label_w / 2
+    sy = TOP_LEFT_Y
     if held:
         if piece.shape == Piece.I or piece.shape == Piece.O:
-            px = top_left_x / 2 - 2 * block_size
+            px = TOP_LEFT_X / 2 - 2 * BLOCK_SIZE
         else:
-            px = top_left_x / 2 - 1.5 * block_size
-        py = sy + block_size + label_h
+            px = TOP_LEFT_X / 2 - 1.5 * BLOCK_SIZE
+        py = sy + BLOCK_SIZE + label_h
         formatted = piece.get_piece_format()
         for pair in formatted:
-            pygame.draw.rect(surface, piece.color, (px + pair[1] * block_size,
-                                                    py + pair[0] * block_size,
-                                                    block_size, block_size), 0)
+            pygame.draw.rect(surface, piece.color, (px + pair[1] * BLOCK_SIZE,
+                                                    py + pair[0] * BLOCK_SIZE,
+                                                    BLOCK_SIZE, BLOCK_SIZE), 0)
     surface.blit(label, (sx, sy))
 
 
 def draw_border(surface):
-    pygame.draw.rect(surface, (255, 255, 255), (top_left_x, top_left_y,
-                                                play_width, play_height), 4)
+    pygame.draw.rect(surface, (255, 255, 255), (TOP_LEFT_X, TOP_LEFT_Y,
+                                                PLAY_WIDTH, PLAY_HEIGHT), 4)
 
 
 # main game logic
@@ -366,7 +374,7 @@ def main(surface):
     pygame.display.quit()
 
 
-win = pygame.display.set_mode((s_width, s_height))
+win = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Tetris')
 icon = pygame.image.load('tetris.png')
 pygame.display.set_icon(icon)
