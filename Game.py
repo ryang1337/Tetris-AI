@@ -24,7 +24,20 @@ class Game:
         next_piece (Piece): the next piece in the queue
         current_piece (Piece): the current piece we are controlling
         clock (clock): used for intervals and delays
-        fall_time (int): how long the current piece has been falling, if > than 
+        fall_time (int): how long the current piece has been falling, if > than fall_speed * 
+                         1000, move current_piece y position down one square
+        fall_speed (int): how long before current_piece moves down one square by itself
+        lock_delay (int): how long before piece locks in place after collision with a locked piece
+        lock_time (int): duration of time after current_piece collides with locked piece
+        lock_y (int): y position of current_piece after collision with locked piece, used to reset 
+                      lock_time and rotate_count
+        rotate_count (int): how many times the piece has rotated after collision with locked piece
+        is_lock (bool): true if piece is in a pre lock state, i.e. after collision but before 
+                        being locked
+        is_hold (bool): true if there is a hold_piece is not None
+        hold_piece (Piece): piece that is being held
+        score (int): score of game
+        play_grid (Grid): the grid where the game and logic is run
     '''
 
     def __init__(self):
