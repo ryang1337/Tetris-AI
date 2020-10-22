@@ -100,7 +100,7 @@ class Game:
 
         self.score = 0
 
-        self.rend = False
+        self.rend = True
 
         matrix = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
         self.play_grid = Grid.Grid(matrix)
@@ -153,6 +153,7 @@ class Game:
             x, y = pos
             if y >= 3:
                 return False
+        self.score -= 10
         return True
 
     # returns a Piece object using 7 bag cycle
@@ -195,7 +196,7 @@ class Game:
                             del self.locked_positions[(j, i)]
 
         if cleared_below > 1:
-            self.score += 2 ** (cleared_below - 1)
+            self.score += 2 ** (cleared_below - 2)
 
         return cleared_below
 
@@ -292,6 +293,20 @@ class Game:
                                                                        Game.BLOCK_SIZE), 0)
         self.draw_grid()
 
+    def draw_score(self):
+        font = pygame.font.SysFont('malgungothicsemilight', 30)
+        score = font.render(str(self.score), 1, (255, 255, 255))
+        score_label = font.render('Score', 1, (255, 255, 255))
+        score_w, score_h = font.size(str(self.score))
+        label_w, label_h = font.size('Score')
+        sx = (2 * Game.SCREEN_WIDTH - Game.TOP_LEFT_X) / 2 - score_w / 2
+        sy = Game.SCREEN_HEIGHT - Game.BLOCK_SIZE * 8
+        ssx = (2 * Game.SCREEN_WIDTH - Game.TOP_LEFT_X) / 2 - label_w / 2
+        ssy = Game. SCREEN_HEIGHT - Game.BLOCK_SIZE * 10
+
+        self.win.blit(score, (sx, sy))
+        self.win.blit(score_label, (ssx, ssy))
+
     # draw everything
     def render(self):
         self.draw_window()
@@ -299,6 +314,7 @@ class Game:
         self.draw_border()
         self.draw_next_shape()
         self.draw_hold_piece()
+        self.draw_score()
 
     def count_num_holes(self):
         num_holes = 0
@@ -312,7 +328,8 @@ class Game:
         return num_holes
 
     def get_height_info(self):
-        max_height, bumpiness = 0
+        max_height = 0
+        bumpiness = 0
         prev_line_height = 0
         heights = []
         height_changes = 0
@@ -343,6 +360,9 @@ class Game:
         holes = self.count_num_holes()
         max_height, bumpiness = self.get_height_info()
         return [lines, holes, max_height, bumpiness]
+
+    def set_rend(self, rend):
+        self.rend = rend
 
     # main game logic
     def run_game(self):
