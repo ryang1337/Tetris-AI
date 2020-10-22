@@ -69,13 +69,12 @@ class Game:
         self.score = None
 
         self.play_grid = None
+
+        self.rend = None
         self.reset()
 
     def reset(self):
-        for shape in Piece.SHAPE_Q:
-            Piece.SHAPE_Q.remove(shape)
-        for s in Piece.SHAPES:
-            Piece.SHAPE_Q.append(s)
+        Piece.Piece.reset_bag()
 
         self.locked_positions = {}
 
@@ -101,6 +100,8 @@ class Game:
 
         self.score = 0
 
+        self.rend = False
+
         matrix = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
         self.play_grid = Grid.Grid(matrix)
 
@@ -113,16 +114,16 @@ class Game:
         kick_delta = (None, None)
         temp = Piece.Piece(piece.x, piece.y, piece.shape)
         temp.rotation = piece.rotation
-        if piece.shape == Piece.I:
+        if piece.shape == Piece.Piece.I:
             if direction == 'left':
-                for pos in Piece.I_WALL_KICK_LEFT[temp.rotation]:
+                for pos in Piece.Piece.I_WALL_KICK_LEFT[temp.rotation]:
                     temp.x = piece.x + pos[0]
                     temp.y = piece.y - pos[1]
                     if self.valid_move(temp):
                         kick_delta = pos
                         break
             else:
-                for pos in Piece.I_WALL_KICK_RIGHT[temp.rotation]:
+                for pos in Piece.Piece.I_WALL_KICK_RIGHT[temp.rotation]:
                     temp.x = piece.x + pos[0]
                     temp.y = piece.y - pos[1]
                     if self.valid_move(temp):
@@ -130,14 +131,14 @@ class Game:
                         break
         else:
             if direction == 'left':
-                for pos in Piece.WALL_KICK_LEFT[temp.rotation]:
+                for pos in Piece.Piece.WALL_KICK_LEFT[temp.rotation]:
                     temp.x = piece.x + pos[0]
                     temp.y = piece.y - pos[1]
                     if self.valid_move(temp):
                         kick_delta = pos
                         break
             else:
-                for pos in Piece.WALL_KICK_RIGHT[temp.rotation]:
+                for pos in Piece.Piece.WALL_KICK_RIGHT[temp.rotation]:
                     temp.x = piece.x + pos[0]
                     temp.y = piece.y - pos[1]
                     if self.valid_move(temp):
@@ -157,11 +158,11 @@ class Game:
     # returns a Piece object using 7 bag cycle
     @staticmethod
     def get_shape():
-        if len(Piece.SHAPE_Q) == 0:
-            for s in Piece.SHAPES:
-                Piece.SHAPE_Q.append(s)
-        shape = random.choice(Piece.SHAPE_Q)
-        Piece.SHAPE_Q.remove(shape)
+        if len(Piece.Piece.SHAPE_Q) == 0:
+            Piece.Piece.reset_bag()
+
+        shape = random.choice(Piece.Piece.SHAPE_Q)
+        Piece.Piece.SHAPE_Q.remove(shape)
         return Piece.Piece(3, 0, shape)
 
     # draws the lines for the play grid
@@ -193,6 +194,11 @@ class Game:
                         if cleared_below > 0:
                             del self.locked_positions[(j, i)]
 
+        if cleared_below > 1:
+            self.score += 2 ** (cleared_below - 1)
+
+        return cleared_below
+
     # draws the shape in the 'next' area
     def draw_next_shape(self):
         font = pygame.font.SysFont('malgungothicsemilight', 30)
@@ -200,7 +206,7 @@ class Game:
         label_w, label_h = font.size('Next')
         sx = (2 * Game.SCREEN_WIDTH - Game.TOP_LEFT_X) / 2 - label_w / 2
         sy = Game.TOP_LEFT_Y
-        if self.next_piece.shape == Piece.I or self.next_piece.shape == Piece.O:
+        if self.next_piece.shape == Piece.Piece.I or self.next_piece.shape == Piece.Piece.O:
             px = (2 * Game.SCREEN_WIDTH - Game.TOP_LEFT_X) / 2 - 2 * Game.BLOCK_SIZE
         else:
             px = (2 * Game.SCREEN_WIDTH - Game.TOP_LEFT_X) / 2 - 1.5 * Game.BLOCK_SIZE
@@ -233,7 +239,7 @@ class Game:
         sx = Game.TOP_LEFT_X / 2 - label_w / 2
         sy = Game.TOP_LEFT_Y
         if self.hold_piece is not None:
-            if self.hold_piece.shape == Piece.I or self.hold_piece.shape == Piece.O:
+            if self.hold_piece.shape == Piece.Piece.I or self.hold_piece.shape == Piece.Piece.O:
                 px = Game.TOP_LEFT_X / 2 - 2 * Game.BLOCK_SIZE
             else:
                 px = Game.TOP_LEFT_X / 2 - 1.5 * Game.BLOCK_SIZE
@@ -293,6 +299,50 @@ class Game:
         self.draw_border()
         self.draw_next_shape()
         self.draw_hold_piece()
+
+    def count_num_holes(self):
+        num_holes = 0
+        for col in range(len(self.play_grid.grid[0])):
+            found_block = False
+            for row in range(len(self.play_grid.grid)):
+                if self.play_grid.grid[row][col] != (0, 0, 0):
+                    found_block = True
+                elif found_block and self.play_grid.grid[row][col] == (0, 0, 0):
+                    num_holes += 1
+        return num_holes
+
+    def get_height_info(self):
+        max_height, bumpiness = 0
+        prev_line_height = 0
+        heights = []
+        height_changes = 0
+        for col in range(len(self.play_grid.grid[0])):
+            has_block = False
+            for row in range(len(self.play_grid.grid)):
+                if not (self.play_grid.grid[row][col] == (0, 0, 0)):
+                    has_block = True
+                    curr_line_height = len(self.play_grid.grid) - row
+                    if curr_line_height not in heights:
+                        heights.append(curr_line_height)
+                        height_changes += 1
+                    if curr_line_height > max_height:
+                        max_height = curr_line_height
+                    bumpiness += abs(curr_line_height - prev_line_height)
+                    prev_line_height = curr_line_height
+                    break
+            if not has_block:
+                prev_line_height = 0
+                if prev_line_height not in heights:
+                    heights.append(0)
+                    height_changes += 1
+        bumpiness *= height_changes
+        return max_height, bumpiness
+
+    def get_game_info(self):
+        lines = self.clear_rows()
+        holes = self.count_num_holes()
+        max_height, bumpiness = self.get_height_info()
+        return [lines, holes, max_height, bumpiness]
 
     # main game logic
     def run_game(self):
@@ -422,8 +472,13 @@ class Game:
                 x, y = shape_pos[i]
                 self.play_grid.grid[y][x] = self.current_piece.color
 
-            self.render()
+            if self.rend:
+                self.render()
 
             # update screen
             pygame.display.update()
         self.reset()
+
+
+if __name__ == "__main__":
+    env = Game()
