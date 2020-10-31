@@ -2,7 +2,7 @@ import pygame
 import random
 import Piece
 import Grid
-
+import copy
 
 class Game:
     pygame.font.init()
@@ -195,10 +195,12 @@ class Game:
                         if cleared_below > 0:
                             del self.locked_positions[(j, i)]
 
-        if cleared_below > 1:
-            self.score += 2 ** (cleared_below - 2)
+        points = 2 ** (cleared_below - 2)
 
-        return cleared_below
+        if cleared_below > 1:
+            self.score += points
+
+        return points
 
     # draws the shape in the 'next' area
     def draw_next_shape(self):
@@ -359,10 +361,44 @@ class Game:
         return max_height, bumpiness
 
     def get_game_info(self):
-        lines = self.clear_rows()
+        points = self.clear_rows()
         holes = self.count_num_holes()
         max_height, bumpiness = self.get_height_info()
-        return [lines, holes, max_height, bumpiness]
+        return [points, holes, max_height, bumpiness]
+
+    def get_next_states(self):
+        states = {}
+        if self.current_piece == Piece.Piece.O:
+            rotations = 1
+        elif self.current_piece == Piece.Piece.I or self.current_piece == Piece.Piece.Z or self.current_piece == \
+                Piece.Piece.S:
+            rotations = 2
+        else:
+            rotations = 4
+
+        for i in range(rotations):
+            self.current_piece.rotate_right()
+            piece_positions = self.current_piece.get_piece_format()
+
+            width_blocks = self.PLAY_WIDTH // self.BLOCK_SIZE
+
+            x_min = -1 * min(p[1] for p in piece_positions)
+            x_max = width_blocks - max(p[1] for p in piece_positions)
+
+            for j in range(x_min, x_max):
+                temp_board = copy.deepcopy(self.play_grid)
+                drop = True
+                while drop:
+                    self.current_piece.y += 1
+                    if not self.valid_move(self.current_piece):
+                        drop = False
+                self.current_piece.y -= 1
+                pos = self.current_piece.convert_shape_format()
+                make_move(self.current_piece, pos, temp_board)
+                other_temp = self.play_grid
+                self.play_grid = temp_board
+                states[(pos, i)] = self.get_game_info()
+                self.play_grid = other_temp
 
     def set_rend(self, rend):
         self.rend = rend
@@ -501,6 +537,14 @@ class Game:
             # update screen
             pygame.display.update()
         self.reset()
+
+
+def make_move(piece, pos, board):
+    for i in range(len(pos)):
+        x, y = pos[i]
+        board.grid[y][x] = piece.color
+
+    return board
 
 
 if __name__ == "__main__":
