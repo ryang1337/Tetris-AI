@@ -1,6 +1,5 @@
 from DQNAgent import DQNAgent
 from Game import Game
-import random
 from tqdm import tqdm
 
 
@@ -13,7 +12,6 @@ def main():
     for episode in tqdm(range(1, DQNAgent.EPISODES + 1), ascii=True, unit='episodes'):
         agent.tensorboard.step = episode
 
-        steps = 0
         curr_state = env.reset()
 
         if not (episode % DQNAgent.REND_EVERY):
@@ -48,4 +46,3 @@ def main():
             max_reward = max(scores[-DQNAgent.LOG_EVERY:])
             agent.tensorboard.update_stats(reward_avg=average_reward, reward_min=min_reward,
                                            reward_max=max_reward, epsilon=agent.epsilon)
-

@@ -394,7 +394,7 @@ class Game:
                         drop = False
                 self.current_piece.y -= 1
                 pos = self.current_piece.convert_shape_format()
-                make_move(self.current_piece, pos, temp_board)
+                add_to_board(self.current_piece, pos, temp_board)
                 other_temp = self.play_grid
                 self.play_grid = temp_board
                 states[(pos, i)] = self.get_game_info()
@@ -402,6 +402,32 @@ class Game:
 
     def set_rend(self, rend):
         self.rend = rend
+
+    def make_move(self, action):
+        pos = action[0]
+        rotation = action[1]
+        for i in range(rotation):
+            self.current_piece.rotate_right()
+        add_to_board(self.current_piece, pos, self.play_grid)
+
+        done = self.check_lost()
+
+        shape_pos = self.current_piece.convert_shape_format()
+        for pos in shape_pos:
+            p = (pos[0], pos[1])
+            self.locked_positions[p] = self.current_piece.color
+        self.play_grid.update_grid(self.locked_positions)
+        self.current_piece = self.next_piece
+        self.next_piece = self.get_shape()
+        self.change_piece = False
+        points = self.clear_rows()
+        self.fall_time = 10000
+        self.is_hold = False
+
+        if done:
+            score = -1
+
+        return score, done
 
     # main game logic
     def run_game(self):
@@ -539,7 +565,7 @@ class Game:
         self.reset()
 
 
-def make_move(piece, pos, board):
+def add_to_board(piece, pos, board):
     for i in range(len(pos)):
         x, y = pos[i]
         board.grid[y][x] = piece.color
