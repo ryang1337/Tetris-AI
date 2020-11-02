@@ -1,5 +1,6 @@
-from keras.models import Sequential
-from keras.layers import Dense
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 from collections import deque
 import numpy as np
 from datetime import datetime
@@ -14,7 +15,7 @@ class DQNAgent:
     REPLAY_MEMORY_SIZE = 20_000
     MIN_REPLAY_MEMORY_SIZE = 1_000
     EPISODES = 2_000
-    REND_EVERY = 50
+    REND_EVERY = 1
     LOG_EVERY = 50
 
     EPSILON_MIN = 0.001
@@ -84,7 +85,7 @@ class DQNAgent:
             y.append(new_q)
 
         self.model.fit(np.array(x), np.array(y), batch_size=DQNAgent.BATCH_SIZE, verbose=0,
-                       shuffle=False, callbacks=[self.tensorboard] if terminal_state else None)
+                       shuffle=False)  # , callbacks=[self.tensorboard] if terminal_state else None)
 
         if self.epsilon > DQNAgent.EPSILON_MIN:
             self.epsilon *= DQNAgent.EPSILON_DECAY

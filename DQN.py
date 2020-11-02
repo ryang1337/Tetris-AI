@@ -1,9 +1,10 @@
 from DQNAgent import DQNAgent
 from Game import Game
 from tqdm import tqdm
+import time
 
 
-def main():
+def run():
     env = Game()
     agent = DQNAgent()
 
@@ -39,10 +40,14 @@ def main():
 
         scores.append(env.get_score())
 
-        if not episode % DQNAgent.LOG_EVERY or episode == 1:
+        '''if not episode % DQNAgent.LOG_EVERY or episode == 1:
             average_reward = sum(scores[-DQNAgent.LOG_EVERY:]) / len(
                 scores[-DQNAgent.LOG_EVERY:])
             min_reward = min(scores[-DQNAgent.LOG_EVERY:])
             max_reward = max(scores[-DQNAgent.LOG_EVERY:])
             agent.tensorboard.update_stats(reward_avg=average_reward, reward_min=min_reward,
-                                           reward_max=max_reward, epsilon=agent.epsilon)
+                                           reward_max=max_reward, epsilon=agent.epsilon)'''
+
+
+if __name__ == "__main__":
+    run()

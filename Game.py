@@ -3,6 +3,8 @@ import random
 import Piece
 import Grid
 import copy
+import time
+
 
 class Game:
     pygame.font.init()
@@ -100,12 +102,10 @@ class Game:
 
         self.score = 0
 
-        self.rend = True
-
         matrix = [[(0, 0, 0) for _ in range(10)] for _ in range(23)]
         self.play_grid = Grid.Grid(matrix)
 
-        self.run_game()
+        return self.get_game_info()
 
     # returns the change in position for a rotation to be valid and returns a
     # tuple with the x and y delta. if there are no possible positions,
@@ -376,6 +376,9 @@ class Game:
         else:
             rotations = 4
 
+        temp_score = self.score
+        temp_locked = copy.deepcopy(self.locked_positions)
+
         for i in range(rotations):
             self.current_piece.rotate_right()
             piece_positions = self.current_piece.get_piece_format()
@@ -386,48 +389,66 @@ class Game:
             x_max = width_blocks - max(p[1] for p in piece_positions)
 
             for j in range(x_min, x_max):
+                self.current_piece.x = j
+                self.current_piece.y = 0
                 temp_board = copy.deepcopy(self.play_grid)
-                drop = True
-                while drop:
+                self.current_piece.y += 1
+                while self.valid_move(self.current_piece):
                     self.current_piece.y += 1
-                    if not self.valid_move(self.current_piece):
-                        drop = False
                 self.current_piece.y -= 1
                 pos = self.current_piece.convert_shape_format()
-                add_to_board(self.current_piece, pos, temp_board)
+                self.add_to_board(self.current_piece, pos, temp_board)
                 other_temp = self.play_grid
                 self.play_grid = temp_board
-                states[(pos, i)] = self.get_game_info()
+                states[(pos[0], pos[1], i)] = self.get_game_info()
                 self.play_grid = other_temp
+                self.locked_positions = copy.deepcopy(temp_locked)
+                self.play_grid.update_grid(self.locked_positions)
+                self.render()
+                pygame.display.update()
+                time.sleep(0.1)
+
+        self.score = temp_score
+
+        return states
 
     def set_rend(self, rend):
         self.rend = rend
 
     def make_move(self, action):
-        pos = action[0]
-        rotation = action[1]
+        pos = (action[0], action[1])
+        rotation = action[2]
         for i in range(rotation):
             self.current_piece.rotate_right()
-        add_to_board(self.current_piece, pos, self.play_grid)
+        self.add_to_board(self.current_piece, pos, self.play_grid)
 
         done = self.check_lost()
-
-        shape_pos = self.current_piece.convert_shape_format()
-        for pos in shape_pos:
-            p = (pos[0], pos[1])
-            self.locked_positions[p] = self.current_piece.color
         self.play_grid.update_grid(self.locked_positions)
         self.current_piece = self.next_piece
         self.next_piece = self.get_shape()
-        self.change_piece = False
-        points = self.clear_rows()
-        self.fall_time = 10000
-        self.is_hold = False
+        score = self.clear_rows()
+
+        if self.rend:
+            self.render()
+            pygame.display.update()
 
         if done:
             score = -1
 
         return score, done
+
+    def add_to_board(self, piece, pos, board):
+        for i in range(len(pos)):
+            x, y = pos[i]
+            board.grid[y][x] = piece.color
+
+        shape_pos = self.current_piece.convert_shape_format()
+
+        for pos in shape_pos:
+            p = (pos[0], pos[1])
+            self.locked_positions[p] = self.current_piece.color
+
+        return board
 
     # main game logic
     def run_game(self):
@@ -460,7 +481,7 @@ class Game:
                         self.lock_time = 0
                         self.rotate_count = 0
 
-            # if down key is pressed, just speed up auto drop, same as soft drop
+            # if down key is pressed, just speed up auto drop, functions as soft drop
             if self.key_pressed(pygame.K_DOWN):
                 self.fall_speed = 0.03
             else:
@@ -479,7 +500,7 @@ class Game:
                 self.fall_time = 10000
                 self.is_hold = False
 
-            # check keypresses and end game
+            # check key presses and end game
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
@@ -563,14 +584,6 @@ class Game:
             # update screen
             pygame.display.update()
         self.reset()
-
-
-def add_to_board(piece, pos, board):
-    for i in range(len(pos)):
-        x, y = pos[i]
-        board.grid[y][x] = piece.color
-
-    return board
 
 
 if __name__ == "__main__":
