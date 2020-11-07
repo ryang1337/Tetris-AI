@@ -31,7 +31,7 @@ class DQNAgent:
 
     def create_model(self):
         model = Sequential()
-        model.add(Dense(32, input_dim=5, activation="relu"))
+        model.add(Dense(32, input_dim=4, activation="relu"))
         model.add(Dense(32, "relu"))
         model.add(Dense(1, "linear"))
 
