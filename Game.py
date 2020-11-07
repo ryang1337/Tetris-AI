@@ -400,7 +400,7 @@ class Game:
                 self.add_to_board(self.current_piece, pos, temp_board)
                 other_temp = self.play_grid
                 self.play_grid = temp_board
-                states[(pos[0], pos[1], pos[2], pos[3], i)] = self.get_game_info()
+                states[(self.current_piece.x, self.current_piece.y, i)] = self.get_game_info()
                 self.play_grid = other_temp
                 self.locked_positions = copy.deepcopy(temp_locked)
                 self.play_grid.update_grid(self.locked_positions)
@@ -413,10 +413,14 @@ class Game:
         self.rend = rend
 
     def make_move(self, action):
-        pos = (action[0], action[1], action[2], action[3])
-        rotation = action[4]
-        for i in range(rotation):
+        rotation = action[2]
+        for i in range(rotation + 1):
             self.current_piece.rotate_right()
+
+        self.current_piece.x = action[0]
+        self.current_piece.y = action[1]
+
+        pos = self.current_piece.convert_shape_format()
         self.add_to_board(self.current_piece, pos, self.play_grid)
 
         done = self.check_lost()
